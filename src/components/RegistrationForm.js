@@ -114,6 +114,7 @@ const handleRegister = async () => {
             <button className="btn btn-primary" onClick={handleRegister}>
               Register
             </button>
+            <a href='/'> Existing user? Login Here</a>
           </div>
         </div>
       </div>

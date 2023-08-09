@@ -82,6 +82,7 @@ React.useEffect(() => {
             <button className="btn btn-primary" onClick={handleLogin}>
               Login
             </button>
+            <a href='/register'>Register Here!</a>
           </div>
         </div>
       </div>

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function ProfilePage() {
-  const location = useLocation(); // Use the location object from React Router
-
+  const location = useLocation(); // Use the location object from React Router  
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [subscription, setSubscription] = useState('Basic');
-  
+
 useEffect(() => {
     const userId = location.state.userId; // Access userId from location state
 console.log(userId)
@@ -37,12 +37,16 @@ console.log(userId)
     }
   };
 
+  const handleLogout = ()=>{
+    localStorage.removeItem("token")
+    navigate('/')
+  }
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-6">
           <div className="card p-4">
-            <h2 className="mb-4">Profile</h2>
+            <h2 className="mb-4">Vendor Register</h2>
             <div className="mb-3">
               <label htmlFor="username" className="form-label">
                 Username
@@ -98,6 +102,9 @@ console.log(userId)
               Update Subscription
             </button>
           </div>
+        </div>
+        <div className='col-md-6'>
+            <button className='btn btn-success' onClick={handleLogout}>Logout</button>
         </div>
       </div>
     </div>
