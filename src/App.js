@@ -17,7 +17,6 @@ function App() {
           <Route path="/register" element={<RegistrationForm />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
-
     </div>
   );
 }
