@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors')
 const app = express();
 const port = 3001;
+const jwt = require('jsonwebtoken');
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -22,33 +23,83 @@ db.connect(err => {
   }
 });
 
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-  
-    // Here, you would typically compare the username and password with data stored in your database
-    // For demonstration purposes, let's assume you have a users table with username and hashedPassword columns
+// app.post('/login', (req, res) => {
+//     const { username, password } = req.body;
+
+//     // Here, you would typically compare the username and password with data stored in your database
+//     // For demonstration purposes, let's assume you have a users table with username and hashedPassword columns
+//     db.query(
+//       'SELECT id, username FROM users WHERE username = ? AND password = ?', 
+//       [username, password], // Replace hashedPassword with your actual hashing function
+//       (error, results) => {
+//         if (error) {
+//           console.error('Error during login:', error);
+//           res.status(500).json({ error: 'An error occurred during login.' });
+//         } else if (results.length === 0) {
+//           res.status(401).json({ error: 'Invalid username or password.' });
+//         } else {
+//           const user = results[0];
+//           res.json({
+// message: 'Login successful',
+// user: { userId: user.id, username: user.username }
+//           });
+//         }
+//       }
+//     );
+//   });
+
+// User login route
+
+
+// Function to get user by username
+function getUserByUsername(username) {
+  return new Promise((resolve, reject) => {
     db.query(
-      'SELECT id, username FROM users WHERE username = ? AND password = ?', 
-      [username, password], // Replace hashedPassword with your actual hashing function
+      'SELECT id, username, password FROM users WHERE username = ?',
+      [username],
       (error, results) => {
         if (error) {
-          console.error('Error during login:', error);
-          res.status(500).json({ error: 'An error occurred during login.' });
-        } else if (results.length === 0) {
-          res.status(401).json({ error: 'Invalid username or password.' });
+          reject(error);
         } else {
           const user = results[0];
-          res.json({
-            message: 'Login successful',
-            user: { userId: user.id, username: user.username }
-          });
+          resolve(user);
         }
       }
     );
   });
-  
+}
 
-  app.post('/register', (req, res) => {
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // Fetch the user's plain text password from the database based on the username
+    // (You need to implement your database logic here)
+    const user = await getUserByUsername(username);
+
+    if (user && user.password === password) {
+      // Generate a randomly generated secret key
+      const secretKey = 'r6p2L9a5K8c1F3g7Y0z4Q1b5E2h6X9w3';
+
+      // Generate a JWT token
+      const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+
+      res.json({
+        token, message: 'Login successful',
+        user: { userId: user.id, username: user.username }
+      });
+    } else {
+      res.status(401).json({ error: 'Invalid username or password' });
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'An error occurred during login' });
+  }
+});
+
+
+
+app.post('/register', (req, res) => {
   const { username, password, email, mobile } = req.body;
 
   // Here, you would typically insert the new user data into your database
@@ -70,7 +121,7 @@ app.post('/login', (req, res) => {
   );
 });
 
-  
+
 
 app.put('/updateSubscription', (req, res) => {
   const { userId, subscription } = req.body;
@@ -94,7 +145,7 @@ app.get('/getUserData/:userId', (req, res) => {
 
   // Fetch user data including email and mobile based on the userId
   db.query(
-    'SELECT id, username, email, mobile, subscription FROM users WHERE id = ?', 
+    'SELECT id, username, email, mobile, subscription FROM users WHERE id = ?',
     [userId],
     (error, results) => {
       if (error) {
@@ -119,6 +170,6 @@ app.get('/getUserData/:userId', (req, res) => {
 });
 
 
-  app.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
