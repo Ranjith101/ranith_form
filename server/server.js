@@ -23,39 +23,11 @@ db.connect(err => {
   }
 });
 
-// app.post('/login', (req, res) => {
-//     const { username, password } = req.body;
-
-//     // Here, you would typically compare the username and password with data stored in your database
-//     // For demonstration purposes, let's assume you have a users table with username and hashedPassword columns
-//     db.query(
-//       'SELECT id, username FROM users WHERE username = ? AND password = ?', 
-//       [username, password], // Replace hashedPassword with your actual hashing function
-//       (error, results) => {
-//         if (error) {
-//           console.error('Error during login:', error);
-//           res.status(500).json({ error: 'An error occurred during login.' });
-//         } else if (results.length === 0) {
-//           res.status(401).json({ error: 'Invalid username or password.' });
-//         } else {
-//           const user = results[0];
-//           res.json({
-// message: 'Login successful',
-// user: { userId: user.id, username: user.username }
-//           });
-//         }
-//       }
-//     );
-//   });
-
-// User login route
-
-
 // Function to get user by username
 function getUserByUsername(username) {
   return new Promise((resolve, reject) => {
     db.query(
-      'SELECT id, username, password FROM users WHERE username = ?',
+      'SELECT user_id, username, password FROM users WHERE username = ?',
       [username],
       (error, results) => {
         if (error) {
@@ -68,13 +40,11 @@ function getUserByUsername(username) {
     );
   });
 }
-
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Fetch the user's plain text password from the database based on the username
-    // (You need to implement your database logic here)
+    // Fetch the user's plain text password and user_id from the database based on the username
     const user = await getUserByUsername(username);
 
     if (user && user.password === password) {
@@ -82,11 +52,11 @@ app.post('/login', async (req, res) => {
       const secretKey = 'r6p2L9a5K8c1F3g7Y0z4Q1b5E2h6X9w3';
 
       // Generate a JWT token
-      const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+      const token = jwt.sign({ user_id: user.user_id, username }, secretKey, { expiresIn: '1h' });
 
       res.json({
         token, message: 'Login successful',
-        user: { userId: user.id, username: user.username }
+        user: { userId: user.user_id, username: user.username }
       });
     } else {
       res.status(401).json({ error: 'Invalid username or password' });
@@ -96,8 +66,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'An error occurred during login' });
   }
 });
-
-
 
 app.post('/register', (req, res) => {
   const { username, password, email, mobile } = req.body;
@@ -112,22 +80,39 @@ app.post('/register', (req, res) => {
         console.error('Error during registration:', error);
         res.status(500).json({ error: 'An error occurred during registration.' });
       } else {
-        res.json({
-          message: 'Registration successful',
-          user: { userId: results.insertId, username }
-        });
+        const userId = results.insertId;
+
+        // Insert a new row in the user_subscription table with the user's subscription
+        db.query(
+          'INSERT INTO user_subscription (user_id, subscription_type, start_date) VALUES (?, ?, ?)',
+          [userId, 'Basic', new Date()],
+          (subscriptionError, subscriptionResults) => {
+            if (subscriptionError) {
+              console.error('Error during subscription:', subscriptionError);
+              res.status(500).json({ error: 'An error occurred during subscription.' });
+            } else {
+              res.json({
+                message: 'Registration and subscription successful',
+                user: { userId, username }
+              });
+            }
+          }
+        );
       }
     }
   );
 });
+
+// ...
 
 
 
 app.put('/updateSubscription', (req, res) => {
   const { userId, subscription } = req.body;
 
+  // Update the subscription type in the user_subscription table
   db.query(
-    'UPDATE users SET subscription = ? WHERE id = ?',
+    'UPDATE user_subscription SET subscription_type = ? WHERE user_id = ?',
     [subscription, userId],
     (error, results) => {
       if (error) {
@@ -140,12 +125,13 @@ app.put('/updateSubscription', (req, res) => {
   );
 });
 
+
 app.get('/getUserData/:userId', (req, res) => {
   const userId = req.params.userId;
 
-  // Fetch user data including email and mobile based on the userId
+  // Fetch user data including email, mobile, and subscription based on the userId
   db.query(
-    'SELECT id, username, email, mobile, subscription FROM users WHERE id = ?',
+    'SELECT u.user_id, u.username, u.email, u.mobile, us.subscription_type AS subscription FROM users u LEFT JOIN user_subscription us ON u.user_id = us.user_id WHERE u.user_id = ?',
     [userId],
     (error, results) => {
       if (error) {
@@ -157,7 +143,7 @@ app.get('/getUserData/:userId', (req, res) => {
         const userData = results[0];
         res.json({
           user: {
-            userId: userData.id,
+            userId: userData.user_id,
             username: userData.username,
             email: userData.email,
             mobile: userData.mobile,
@@ -168,6 +154,7 @@ app.get('/getUserData/:userId', (req, res) => {
     }
   );
 });
+
 
 
 app.listen(port, () => {
