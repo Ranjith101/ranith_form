@@ -49,26 +49,27 @@ app.post('/login', (req, res) => {
   
 
   app.post('/register', (req, res) => {
-    const { username, password } = req.body;
-  
-    // Here, you would typically insert the new user data into your database
-    // For demonstration purposes, let's assume you have a users table with username and hashedPassword columns
-    db.query(
-      'INSERT INTO users (username, password) VALUES (?, ?)',
-      [username, password], // Replace hashedPassword with your actual hashing function
-      (error, results) => {
-        if (error) {
-          console.error('Error during registration:', error);
-          res.status(500).json({ error: 'An error occurred during registration.' });
-        } else {
-          res.json({
-            message: 'Registration successful',
-            user: { userId: results.insertId, username } // Assuming your database provides the inserted ID
-          });
-        }
+  const { username, password, email, mobile } = req.body;
+
+  // Here, you would typically insert the new user data into your database
+  // For demonstration purposes, let's assume you have a users table with additional columns
+  db.query(
+    'INSERT INTO users (username, password, email, mobile) VALUES (?, ?, ?, ?)',
+    [username, password, email, mobile], // Replace hashedPassword with your actual hashing function
+    (error, results) => {
+      if (error) {
+        console.error('Error during registration:', error);
+        res.status(500).json({ error: 'An error occurred during registration.' });
+      } else {
+        res.json({
+          message: 'Registration successful',
+          user: { userId: results.insertId, username }
+        });
       }
-    );
-  });
+    }
+  );
+});
+
   
 
 app.put('/updateSubscription', (req, res) => {
@@ -89,32 +90,63 @@ app.put('/updateSubscription', (req, res) => {
 });
 
 app.get('/getUserData/:userId', (req, res) => {
-    const userId = req.params.userId;
-  
-    // Here, you would fetch user data based on the userId
-    // For demonstration purposes, let's assume you have a users table
-    db.query(
-      'SELECT id, username, subscription FROM users WHERE id = ?', 
-      [userId],
-      (error, results) => {
-        if (error) {
-          console.error('Error fetching user data:', error);
-          res.status(500).json({ error: 'An error occurred while fetching user data.' });
-        } else if (results.length === 0) {
-          res.status(404).json({ error: 'User not found.' });
-        } else {
-          const userData = results[0];
-          res.json({
-            user: {
-              userId: userData.id,
-              username: userData.username,
-              subscription: userData.subscription
-            }
-          });
-        }
+  const userId = req.params.userId;
+
+  // Fetch user data including email and mobile based on the userId
+  db.query(
+    'SELECT id, username, email, mobile, subscription FROM users WHERE id = ?', 
+    [userId],
+    (error, results) => {
+      if (error) {
+        console.error('Error fetching user data:', error);
+        res.status(500).json({ error: 'An error occurred while fetching user data.' });
+      } else if (results.length === 0) {
+        res.status(404).json({ error: 'User not found.' });
+      } else {
+        const userData = results[0];
+        res.json({
+          user: {
+            userId: userData.id,
+            username: userData.username,
+            email: userData.email,
+            mobile: userData.mobile,
+            subscription: userData.subscription
+          }
+        });
       }
-    );
-  });
+    }
+  );
+});
+
+
+
+// app.get('/getUserData/:userId', (req, res) => {
+//     const userId = req.params.userId;
+  
+//     // Here, you would fetch user data based on the userId
+//     // For demonstration purposes, let's assume you have a users table
+//     db.query(
+//       'SELECT id, username, subscription FROM users WHERE id = ?', 
+//       [userId],
+//       (error, results) => {
+//         if (error) {
+//           console.error('Error fetching user data:', error);
+//           res.status(500).json({ error: 'An error occurred while fetching user data.' });
+//         } else if (results.length === 0) {
+//           res.status(404).json({ error: 'User not found.' });
+//         } else {
+//           const userData = results[0];
+//           res.json({
+//             user: {
+//               userId: userData.id,
+//               username: userData.username,
+//               subscription: userData.subscription
+//             }
+//           });
+//         }
+//       }
+//     );
+//   });
   
 
 app.listen(port, () => {
