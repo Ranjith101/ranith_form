@@ -10,7 +10,25 @@ function RegistrationForm() {
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
 
-  const handleRegister = async () => {
+//   const handleRegister = async () => {
+//     try {
+//       const response = await axios.post('http://localhost:3001/register', {
+//         username,
+//         password,
+//         email,
+//         mobile,
+//       });
+
+//       const { userId, username: registeredUsername } = response.data.user;
+//       // Update state or context to indicate successful registration
+//       navigate('/profile'); // Navigate to the profile page
+//     } catch (error) {
+//       console.error('Error:', error);
+//       // Handle registration error
+//     }
+//   };
+
+const handleRegister = async () => {
     try {
       const response = await axios.post('http://localhost:3001/register', {
         username,
@@ -18,16 +36,23 @@ function RegistrationForm() {
         email,
         mobile,
       });
-
+  
+      // Assuming the response structure is { userId, username }
       const { userId, username: registeredUsername } = response.data.user;
-      // Update state or context to indicate successful registration
-      navigate('/profile'); // Navigate to the profile page
+      console.log(userId)
+  console.log(response.data)
+      if (userId) {
+        // Registration successful
+        navigate('/profile',{ state: { userId } }); // Navigate to the profile page
+      } else {
+        // Handle registration failure, display error message, etc.
+      }
     } catch (error) {
       console.error('Error:', error);
       // Handle registration error
     }
   };
-
+  
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
