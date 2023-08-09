@@ -119,36 +119,6 @@ app.get('/getUserData/:userId', (req, res) => {
 });
 
 
-
-// app.get('/getUserData/:userId', (req, res) => {
-//     const userId = req.params.userId;
-  
-//     // Here, you would fetch user data based on the userId
-//     // For demonstration purposes, let's assume you have a users table
-//     db.query(
-//       'SELECT id, username, subscription FROM users WHERE id = ?', 
-//       [userId],
-//       (error, results) => {
-//         if (error) {
-//           console.error('Error fetching user data:', error);
-//           res.status(500).json({ error: 'An error occurred while fetching user data.' });
-//         } else if (results.length === 0) {
-//           res.status(404).json({ error: 'User not found.' });
-//         } else {
-//           const userData = results[0];
-//           res.json({
-//             user: {
-//               userId: userData.id,
-//               username: userData.username,
-//               subscription: userData.subscription
-//             }
-//           });
-//         }
-//       }
-//     );
-//   });
-  
-
-app.listen(port, () => {
+  app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
